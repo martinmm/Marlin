@@ -7,3 +7,7 @@
 #define IS_RAMPS_EFB
 
 #include "pins_RAMPS_13.h"
+
+#undef FAN_PIN
+#define FAN_PIN -1
+
