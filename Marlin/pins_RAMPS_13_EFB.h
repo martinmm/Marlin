@@ -1,21 +1,37 @@
 /**
+ * Marlin 3D Printer Firmware
+ * Copyright (C) 2016 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (C) 2011 Camiel Gubbels / Erik van der Zalm
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+/**
  * Arduino Mega with RAMPS v1.3 pin assignments
  *
  *  RAMPS_13_EFB (Extruder, Fan, Bed)
  */
 
+#define IS_RAMPS_13
 #define IS_RAMPS_EFB
 
-#include "pins_RAMPS_13.h"
+#include "pins_RAMPS_14_EFB.h"
 
 // Disable normal fan to be able to enable auto fan
 #undef FAN_PIN
 #define FAN_PIN -1
-
-// Reverse encoder direction
-#undef BTN_EN1
-#define BTN_EN1 33
-
-#undef BTN_EN2
-#define BTN_EN2 31
 
