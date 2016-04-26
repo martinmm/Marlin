@@ -29,3 +29,8 @@
 #define IS_RAMPS_EFB
 
 #include "pins_RAMPS_14.h"
+
+// Disable normal fan to be able to enable auto fan
+#undef FAN_PIN
+#define FAN_PIN -1
+
