@@ -45,17 +45,12 @@
 #include "pins.h"
 
 #ifndef SANITYCHECK_H
-  #error Your Configuration.h and Configuration_adv.h files are outdated!
+  #error "Your Configuration.h and Configuration_adv.h files are outdated!"
 #endif
 
 #include "Arduino.h"
 
 typedef unsigned long millis_t;
-
-// Arduino < 1.0.0 does not define this, so we need to do it ourselves
-#ifndef analogInputToDigitalPin
-  #define analogInputToDigitalPin(p) ((p) + 0xA0)
-#endif
 
 #ifdef USBCON
   #include "HardwareSerial.h"
@@ -65,7 +60,11 @@ typedef unsigned long millis_t;
 
 #include "WString.h"
 
-#include "stopwatch.h"
+#if ENABLED(PRINTCOUNTER)
+  #include "printcounter.h"
+#else
+  #include "stopwatch.h"
+#endif
 
 #ifdef USBCON
   #if ENABLED(BLUETOOTH)
@@ -129,6 +128,10 @@ void idle(
 );
 
 void manage_inactivity(bool ignore_stepper_queue = false);
+
+#if ENABLED(DUAL_X_CARRIAGE)
+  extern bool extruder_duplication_enabled;
+#endif
 
 #if ENABLED(DUAL_X_CARRIAGE) && HAS_X_ENABLE && HAS_X2_ENABLE
   #define  enable_x() do { X_ENABLE_WRITE( X_ENABLE_ON); X2_ENABLE_WRITE( X_ENABLE_ON); } while (0)
@@ -212,7 +215,7 @@ void manage_inactivity(bool ignore_stepper_queue = false);
  */
 enum AxisEnum {X_AXIS = 0, A_AXIS = 0, Y_AXIS = 1, B_AXIS = 1, Z_AXIS = 2, C_AXIS = 2, E_AXIS = 3, X_HEAD = 4, Y_HEAD = 5, Z_HEAD = 5};
 
-enum EndstopEnum {X_MIN = 0, Y_MIN = 1, Z_MIN = 2, Z_MIN_PROBE = 3, X_MAX = 4, Y_MAX = 5, Z_MAX = 6, Z2_MIN = 7, Z2_MAX = 8};
+#define _AXIS(AXIS) AXIS ##_AXIS
 
 void enable_all_steppers();
 void disable_all_steppers();
@@ -251,7 +254,6 @@ bool enqueue_and_echo_command(const char* cmd, bool say_ok=false); //put a singl
 void enqueue_and_echo_command_now(const char* cmd); // enqueue now, only return when the command has been enqueued
 void enqueue_and_echo_commands_P(const char* cmd); //put one or many ASCII commands at the end of the current buffer, read from flash
 
-void prepare_arc_move(char isclockwise);
 void clamp_to_software_endstops(float target[3]);
 
 extern millis_t previous_cmd_ms;
@@ -279,25 +281,13 @@ extern float sw_endstop_max[3]; // axis[n].sw_endstop_max
 extern bool axis_known_position[3]; // axis[n].is_known
 extern bool axis_homed[3]; // axis[n].is_homed
 
+// GCode support for external objects
+bool code_seen(char);
+float code_value();
+long code_value_long();
+int16_t code_value_short();
+
 #if ENABLED(DELTA)
-  #ifndef DELTA_RADIUS_TRIM_TOWER_1
-    #define DELTA_RADIUS_TRIM_TOWER_1 0.0
-  #endif
-  #ifndef DELTA_RADIUS_TRIM_TOWER_2
-    #define DELTA_RADIUS_TRIM_TOWER_2 0.0
-  #endif
-  #ifndef DELTA_RADIUS_TRIM_TOWER_3
-    #define DELTA_RADIUS_TRIM_TOWER_3 0.0
-  #endif
-  #ifndef DELTA_DIAGONAL_ROD_TRIM_TOWER_1
-    #define DELTA_DIAGONAL_ROD_TRIM_TOWER_1 0.0
-  #endif
-  #ifndef DELTA_DIAGONAL_ROD_TRIM_TOWER_2
-    #define DELTA_DIAGONAL_ROD_TRIM_TOWER_2 0.0
-  #endif
-  #ifndef DELTA_DIAGONAL_ROD_TRIM_TOWER_3
-    #define DELTA_DIAGONAL_ROD_TRIM_TOWER_3 0.0
-  #endif
   extern float delta[3];
   extern float endstop_adj[3]; // axis[n].endstop_adj
   extern float delta_radius;
@@ -330,10 +320,6 @@ extern bool axis_homed[3]; // axis[n].is_homed
   extern uint8_t host_keepalive_interval;
 #endif
 
-#if ENABLED(PREVENT_DANGEROUS_EXTRUDE)
-  extern float extrude_min_temp;
-#endif
-
 #if FAN_COUNT > 0
   extern int fanSpeeds[FAN_COUNT];
 #endif
@@ -364,20 +350,19 @@ extern bool axis_homed[3]; // axis[n].is_homed
 #endif
 
 // Print job timer
-extern Stopwatch print_job_timer;
+#if ENABLED(PRINTCOUNTER)
+  extern PrintCounter print_job_timer;
+#else
+  extern Stopwatch print_job_timer;
+#endif
 
 // Handling multiple extruders pins
 extern uint8_t active_extruder;
-
-#if ENABLED(DIGIPOT_I2C)
-  extern void digipot_i2c_set_current(int channel, float current);
-  extern void digipot_i2c_init();
-#endif
 
 #if HAS_TEMP_HOTEND || HAS_TEMP_BED
   void print_heaterstates();
 #endif
 
-extern void calculate_volumetric_multipliers();
+void calculate_volumetric_multipliers();
 
 #endif //MARLIN_H

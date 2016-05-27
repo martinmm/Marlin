@@ -113,6 +113,9 @@
 // :[1,2,3,4]
 #define EXTRUDERS 1
 
+// For Cyclops or any "multi-extruder" that shares a single nozzle.
+//#define SINGLENOZZLE
+
 // Offset of the extruders (uncomment if using more than one and relying on firmware to position when changing).
 // The offset has to be X=0, Y=0 for the extruder 0 hotend (default extruder).
 // For the other hotends it is their distance from the extruder 0 hotend.
@@ -340,11 +343,10 @@
 
 // @section machine
 
-// Uncomment this option to enable CoreXY kinematics
+// Uncomment one of these options to enable CoreXY, CoreXZ, or CoreYZ kinematics
 //#define COREXY
-
-// Uncomment this option to enable CoreXZ kinematics
 //#define COREXZ
+//#define COREYZ
 
 //===========================================================================
 //============================== Delta Settings =============================
@@ -564,6 +566,8 @@ const bool Z_MIN_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the l
   #define MESH_NUM_X_POINTS 3  // Don't use more than 7 points per axis, implementation limited.
   #define MESH_NUM_Y_POINTS 3
   #define MESH_HOME_SEARCH_Z 4  // Z after Home, bed somewhere below but above 0.0.
+
+  //#define MESH_G28_REST_ORIGIN // After homing all axes ('G28' or 'G28 XYZ') rest at origin [0,0,0]
 
   //#define MANUAL_BED_LEVELING  // Add display menu option for bed leveling.
 
@@ -796,6 +800,7 @@ const bool Z_MIN_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the l
   #define Z_SAFE_HOMING_Y_POINT ((Y_MIN_POS + Y_MAX_POS) / 2)    // Y point for Z homing when homing all axis (G28).
 #endif
 
+
 // @section movement
 
 /**
@@ -866,13 +871,11 @@ const bool Z_MIN_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the l
 //
 // Host Keepalive
 //
-// By default Marlin will send a busy status message to the host
+// When enabled Marlin will send a busy status message to the host
 // every couple of seconds when it can't accept commands.
 //
-//#define DISABLE_HOST_KEEPALIVE // Enable this option if your host doesn't like keepalive messages.
-#if DISABLED(DISABLE_HOST_KEEPALIVE)
-  #define DEFAULT_KEEPALIVE_INTERVAL 2 // Number of seconds between "busy" messages. Set with M113.
-#endif
+#define HOST_KEEPALIVE_FEATURE       // Disable this if your host doesn't like keepalive messages
+#define DEFAULT_KEEPALIVE_INTERVAL 2 // Number of seconds between "busy" messages. Set with M113.
 
 //
 // M100 Free Memory Watcher
@@ -890,6 +893,32 @@ const bool Z_MIN_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the l
 #define ABS_PREHEAT_HPB_TEMP 100
 #define ABS_PREHEAT_FAN_SPEED 255   // Insert Value between 0 and 255
 
+//
+// Print job timer
+//
+// Enable this option to automatically start and stop the
+// print job timer when M104 and M109 commands are received.
+//
+// In all cases the timer can be started and stopped using
+// the following commands:
+//
+// - M75  - Start the print job timer
+// - M76  - Pause the print job timer
+// - M77  - Stop the print job timer
+#define PRINTJOB_TIMER_AUTOSTART
+
+//
+// Print Counter
+//
+// When enabled Marlin will keep track of some print statistical data such as:
+//  - Total print jobs
+//  - Total successful print jobs
+//  - Total failed print jobs
+//  - Total time printing
+//
+// This information can be viewed by the M78 command.
+//#define PRINTCOUNTER
+
 //=============================================================================
 //============================= LCD and SD support ============================
 //=============================================================================
@@ -904,27 +933,31 @@ const bool Z_MIN_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the l
 //    en, pl, fr, de, es, ru, bg, it, pt, pt_utf8, pt-br, pt-br_utf8,
 //    fi, an, nl, ca, eu, kana, kana_utf8, cn, cz, test
 //
-#define LANGUAGE_INCLUDE GENERATE_LANGUAGE_INCLUDE(en)
+#define LCD_LANGUAGE en
 
 //
-// LCD CHARACTER SET
+// LCD Character Set
 //
-// Choose ONE of the following charset options. This selection depends on
-// your physical hardware, so it must match your character-based LCD.
+// Note: This option is NOT applicable to Graphical Displays.
 //
-// Note: This option is NOT applicable to graphical displays.
+// All character-based LCD's provide ASCII plus one of these
+// language extensions:
 //
-// To find out what type of display you have:
-//  - Compile and upload with the language (above) set to 'test'
+//  - JAPANESE ... the most common
+//  - WESTERN  ... with more accented characters
+//  - CYRILLIC ... for the Russian language
+//
+// To determine the language extension installed on your controller:
+//
+//  - Compile and upload with LCD_LANGUAGE set to 'test'
 //  - Click the controller to view the LCD menu
+//  - The LCD will display Japanese, Western, or Cyrillic text
 //
-// The LCD will display two lines from the upper half of the character set.
+// See https://github.com/MarlinFirmware/Marlin/wiki/LCD-Language
 //
-// See also https://github.com/MarlinFirmware/Marlin/wiki/LCD-Language
+// :['JAPANESE','WESTERN','CYRILLIC']
 //
-#define DISPLAY_CHARSET_HD44780_JAPAN        // this is the most common hardware
-//#define DISPLAY_CHARSET_HD44780_WESTERN
-//#define DISPLAY_CHARSET_HD44780_CYRILLIC
+#define DISPLAY_CHARSET_HD44780 JAPANESE
 
 //
 // LCD TYPE
@@ -978,11 +1011,37 @@ const bool Z_MIN_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the l
 //
 //#define ENCODER_STEPS_PER_MENU_ITEM 5
 
+/**
+ * Encoder Direction Options
+ *
+ * Test your encoder's behavior first with both options disabled.
+ *
+ *  Reversed Value Edit and Menu Nav? Enable REVERSE_ENCODER_DIRECTION.
+ *  Reversed Menu Navigation only?    Enable REVERSE_MENU_DIRECTION.
+ *  Reversed Value Editing only?      Enable BOTH options.
+ */
+
+//
+// This option reverses the encoder direction everywhere
+//
+//  Set this option if CLOCKWISE causes values to DECREASE
+//
+//#define REVERSE_ENCODER_DIRECTION
+
 //
 // This option reverses the encoder direction for navigating LCD menus.
-// By default CLOCKWISE == DOWN. With this enabled CLOCKWISE == UP.
+//
+//  If CLOCKWISE normally moves DOWN this makes it go UP.
+//  If CLOCKWISE normally moves UP this makes it go DOWN.
 //
 //#define REVERSE_MENU_DIRECTION
+
+//
+// Individual Axis Homing
+//
+// Add individual axis homing items (Home X, Home Y, and Home Z) to the LCD menu.
+//
+//#define INDIVIDUAL_AXIS_HOMING_MENU
 
 //
 // SPEAKER/BUZZER
@@ -1052,12 +1111,6 @@ const bool Z_MIN_PROBE_ENDSTOP_INVERTING = false; // set to true to invert the l
 // Note: Usually sold with a white PCB.
 //
 #define REPRAP_DISCOUNT_SMART_CONTROLLER
-
-//
-// BQ LCD Smart Controller shipped by
-// default with the BQ Hephestos 2 and Witbox 2.
-//
-//#define BQ_LCD_SMART_CONTROLLER
 
 //
 // GADGETS3D G3D LCD/SD Controller
