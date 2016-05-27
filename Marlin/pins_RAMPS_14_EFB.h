@@ -34,7 +34,9 @@
 #undef FAN_PIN
 #define FAN_PIN -1
 
-// Filament Runout Sensor connected to Aux1-5: D57
-#undef FILRUNOUT_PIN
-#define FILRUNOUT_PIN 57
+#if ENABLED(FILAMENT_RUNOUT_SENSOR)
+  // Filament Runout Sensor connected to Aux1-5: D57
+  #undef FILRUNOUT_PIN
+  #define FILRUNOUT_PIN 57
+#endif
 
