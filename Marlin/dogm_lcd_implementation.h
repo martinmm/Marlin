@@ -336,6 +336,8 @@ static void lcd_implementation_status_screen() {
   u8g.drawBitmapP(9, 1, STATUS_SCREENBYTEWIDTH, STATUS_SCREENHEIGHT,
     #if HAS_FAN0
       blink && fanSpeeds[0] ? status_screen0_bmp : status_screen1_bmp
+    #elif HAS_AUTO_FAN_0
+      blink && (thermalManager.current_temperature[0] > EXTRUDER_AUTO_FAN_TEMPERATURE) ? status_screen0_bmp : status_screen1_bmp
     #else
       status_screen0_bmp
     #endif
@@ -382,6 +384,12 @@ static void lcd_implementation_status_screen() {
   #if HAS_FAN0
     int per = ((fanSpeeds[0] + 1) * 100) / 256;
     if (per) {
+      lcd_print(itostr3(per));
+      lcd_print('%');
+    }
+  #elif HAS_AUTO_FAN_0
+    if (thermalManager.current_temperature[0] > EXTRUDER_AUTO_FAN_TEMPERATURE) {
+      const static int per = ((EXTRUDER_AUTO_FAN_SPEED + 1) * 100) / 256;
       lcd_print(itostr3(per));
       lcd_print('%');
     }
