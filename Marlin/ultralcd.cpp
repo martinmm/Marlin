@@ -20,12 +20,6 @@ int absPreheatHPBTemp;
 int absPreheatFanSpeed;
 
 
-#ifdef FILAMENT_LCD_DISPLAY
-unsigned long message_millis=0;
-#endif
-
-
-
 #ifdef ULTIPANEL
 static float manual_feedrate[] = MANUAL_FEEDRATE;
 #endif // ULTIPANEL
@@ -222,9 +216,6 @@ static void lcd_status_screen()
         encoderPosition = 0;
         lcd_quick_feedback();
         lcd_implementation_init(); // to maybe revive the LCD if static electricity killed it.
-#ifdef FILAMENT_LCD_DISPLAY
-        message_millis=millis();  //get status message to show up for a while
-#endif
     }
 
 #ifdef ULTIPANEL_FEEDMULTIPLY
@@ -1362,9 +1353,6 @@ void lcd_setstatus(const char* message)
     lcd_status_message[LCD_WIDTH] = '\0';
 
     lcdDrawUpdate = 2;
-#ifdef FILAMENT_LCD_DISPLAY
-        message_millis=millis();  //get status message to show up for a while
-#endif
 }
 void lcd_setstatuspgm(const char* message)
 {
@@ -1377,9 +1365,6 @@ void lcd_setstatuspgm(const char* message)
     lcd_status_message[LCD_WIDTH] = '\0';
 
     lcdDrawUpdate = 2;
-#ifdef FILAMENT_LCD_DISPLAY
-        message_millis=millis();  //get status message to show up for a while
-#endif
 }
 void lcd_setalertstatuspgm(const char* message)
 {
@@ -1573,20 +1558,6 @@ char *ftostr32(const float &x)
   conv[4]=(xx/10)%10+'0';
   conv[5]=(xx)%10+'0';
   conv[6]=0;
-  return conv;
-}
-
-//Float to string with 1.23 format
-char *ftostr12ns(const float &x)
-{
-  long xx=x*100;
-  
-  xx=abs(xx);
-  conv[0]=(xx/100)%10+'0';
-  conv[1]='.';
-  conv[2]=(xx/10)%10+'0';
-  conv[3]=(xx)%10+'0';
-  conv[4]=0;
   return conv;
 }
 
