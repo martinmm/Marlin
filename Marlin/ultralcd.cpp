@@ -1244,7 +1244,7 @@ void lcd_update()
     lcd_buttons_update();
 
     #if (SDCARDDETECT > 0)
-    if((IS_SD_INSERTED != lcd_oldcardstatus && lcd_detected()))
+    if((IS_SD_INSERTED != lcd_oldcardstatus))
     {
         lcdDrawUpdate = 2;
         lcd_oldcardstatus = IS_SD_INSERTED;
