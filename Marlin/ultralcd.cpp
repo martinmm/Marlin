@@ -1347,11 +1347,6 @@ void lcd_setstatus(const char* message)
     if (lcd_status_message_level > 0)
         return;
     strncpy(lcd_status_message, message, LCD_WIDTH);
-
-    size_t i = strlen(lcd_status_message);
-    memset(lcd_status_message + i, ' ', LCD_WIDTH - i);
-    lcd_status_message[LCD_WIDTH] = '\0';
-
     lcdDrawUpdate = 2;
 }
 void lcd_setstatuspgm(const char* message)
@@ -1359,11 +1354,6 @@ void lcd_setstatuspgm(const char* message)
     if (lcd_status_message_level > 0)
         return;
     strncpy_P(lcd_status_message, message, LCD_WIDTH);
-
-    size_t i = strlen(lcd_status_message);
-    memset(lcd_status_message + i, ' ', LCD_WIDTH - i);
-    lcd_status_message[LCD_WIDTH] = '\0';
-
     lcdDrawUpdate = 2;
 }
 void lcd_setalertstatuspgm(const char* message)
@@ -1470,15 +1460,6 @@ void lcd_buttons_update()
         }
     }
     lastEncoderBits = enc;
-}
-
-bool lcd_detected(void)
-{
-#if (defined(LCD_I2C_TYPE_MCP23017) || defined(LCD_I2C_TYPE_MCP23008)) && defined(DETECT_DEVICE)
-  return lcd.LcdDetected() == 1;
-#else
-  return true;
-#endif
 }
 
 void lcd_buzz(long duration, uint16_t freq)

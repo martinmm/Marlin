@@ -11,7 +11,6 @@
   void lcd_setstatuspgm(const char* message);
   void lcd_setalertstatuspgm(const char* message);
   void lcd_reset_alert_level();
-  bool lcd_detected(void);
 
 #ifdef DOGLCD
   extern int lcd_contrast;
@@ -97,7 +96,6 @@
   FORCE_INLINE void lcd_buttons_update() {}
   FORCE_INLINE void lcd_reset_alert_level() {}
   FORCE_INLINE void lcd_buzz(long duration,uint16_t freq) {}
-  FORCE_INLINE bool lcd_detected(void) { return true; }
 
   #define LCD_MESSAGEPGM(x) 
   #define LCD_ALERTMESSAGEPGM(x) 

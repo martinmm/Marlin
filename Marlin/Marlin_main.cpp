@@ -1896,8 +1896,6 @@ void process_commands()
         }
         lcd_ignore_click(false);
       }else{
-          if (!lcd_detected())
-            break;
         while(!lcd_clicked()){
           manage_heater();
           manage_inactivity();
