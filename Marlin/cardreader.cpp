@@ -11,7 +11,8 @@
 
 CardReader::CardReader()
 {
-  #ifdef SDCARD_SORT_ALPHA
+  #if defined(SDCARD_SORT_ALPHA) && SORT_USES_MORE_RAM
+   sortnames = NULL;
    sort_count = 0;
   #endif
    filesize = 0;
@@ -36,15 +37,19 @@ CardReader::CardReader()
   autostart_atmillis=millis()+5000;
 }
 
-char *createFilename(char *buffer, const dir_t &p) //buffer>12characters
+char *createFilename(char *buffer,const dir_t &p) //buffer>12characters
 {
   char *pos=buffer;
-  for (uint8_t i = 0; i < 11; i++) {
-    if (p.name[i] == ' ') continue;
-    if (i == 8) *pos++ = '.';
-    *pos++ = p.name[i];
+  for (uint8_t i = 0; i < 11; i++) 
+  {
+    if (p.name[i] == ' ')continue;
+    if (i == 8) 
+    {
+      *pos++='.';
+    }
+    *pos++=p.name[i];
   }
-  *pos++ = 0;
+  *pos++=0;
   return buffer;
 }
 
@@ -54,7 +59,7 @@ void  CardReader::lsDive(const char *prepend,SdFile parent)
   dir_t p;
   uint8_t cnt=0;
  
-  while (parent.readDir(p, longFilename) > 0)
+  while (parent.readDir(p, diveFilename) > 0)
   {
     if( DIR_IS_SUBDIR(&p) && lsAction!=LS_Count && lsAction!=LS_GetFilename) // hence LS_SerialPrint
     {
@@ -91,8 +96,8 @@ void  CardReader::lsDive(const char *prepend,SdFile parent)
     {
       if (p.name[0] == DIR_NAME_FREE) break;
       if (p.name[0] == DIR_NAME_DELETED || p.name[0] == '.'|| p.name[0] == '_') continue;
-      if (longFilename[0] != '\0' &&
-          (longFilename[0] == '.' || longFilename[0] == '_')) continue;
+      if (diveFilename[0] != '\0' &&
+          (diveFilename[0] == '.' || diveFilename[0] == '_')) continue;
       if ( p.name[0] == '.')
       {
         if ( p.name[1] != '.')
@@ -559,20 +564,21 @@ void CardReader::closefile(bool store_location)
   
 }
 
-void CardReader::getfilename(const uint16_t nr)
+void CardReader::getfilename(const uint8_t nr)
 {
-  #if defined(SDCARD_SORT_ALPHA) && SORT_USES_RAM && SORT_USES_MORE_RAM
+  #if defined(SDCARD_SORT_ALPHA) && SORT_USES_MORE_RAM
     if (nr < sort_count) {
-      strcpy(longFilename, sortnames[nr]);
-      filenameIsDir = isDir[nr];
+      strcpy(diveFilename, sortnames[nr]);
       return;
     }
   #endif
+
   curDir=&workDir;
   lsAction=LS_GetFilename;
   nrFiles=nr;
   curDir->rewind();
   lsDive("",*curDir);
+  
 }
 
 uint16_t CardReader::getnrfilenames()
@@ -633,8 +639,12 @@ void CardReader::updir()
 /**
  * Get the name of a file in the current directory by sort-index
  */
-void CardReader::getfilename_sorted(const uint16_t nr) {
-  getfilename(nr < sort_count ? sort_order[nr] : nr);
+void CardReader::getfilename_sorted(const uint8_t nr) {
+  #if SORT_USES_MORE_RAM
+    getfilename(nr < sort_count ? sort_order[nr] : nr);
+  #else
+    getfilename(nr < SORT_LIMIT ? sort_order[nr] : nr);
+  #endif
 }
 
 /**
@@ -654,73 +664,68 @@ void CardReader::presort()
 
     if (fileCnt > SORT_LIMIT) fileCnt = SORT_LIMIT;
 
-    #if SORT_USES_RAM
-      #if SORT_USES_MORE_RAM
-        sortnames = (char**)calloc(fileCnt, sizeof(char*));
-      #else
-        char *sortnames[fileCnt];
+    #if SORT_USES_MORE_RAM
+      sortnames = (char**)malloc(fileCnt * sizeof(char*));
+      sort_count = fileCnt;
+    #elif SORT_USES_RAM
+      char *sortnames[fileCnt];
+      #if FOLDER_SORTING != 0
+        uint8_t isdir[fileCnt];
       #endif
     #else
-      char name1[LONG_FILENAME_LENGTH+1];
+      char sortname[LONG_FILENAME_LENGTH+1];
     #endif
-
-    #if FOLDER_SORTING != 0
-      #if SORT_USES_RAM && SORT_USES_MORE_RAM
-        isDir = (uint8_t*)calloc(fileCnt, sizeof(uint8_t));
-      #else
-        uint8_t isDir[fileCnt];
-      #endif
-    #endif
-
-    sort_count = fileCnt;
-    sort_order = new uint8_t[fileCnt];
 
     if (fileCnt > 1) {
 
-      // Init sort order. If using RAM then read all filenames now.
-      for (uint16_t i=0; i<fileCnt; i++) {
+      // Init sort order [and get filenames]
+      for (int i=0; i<fileCnt; i++) {
+        int byte=i/8, bit=1<<(i%8);
         sort_order[i] = i;
         #if SORT_USES_RAM
           getfilename(i);
-          sortnames[i] = strdup(longFilename[0] ? longFilename : filename);
-          // char out[30];
-          // sprintf_P(out, PSTR("---- %i %s %s"), i, filenameIsDir ? "D" : " ", sortnames[i]);
-          // SERIAL_ECHOLN(out);
+          char *name = diveFilename[0] ? diveFilename : filename;
+          // SERIAL_ECHOPGM("--- ");
+          // SERIAL_ECHOLN(name);
+          sortnames[i] = (char*)malloc(strlen(name) + 1);
+          strcpy(sortnames[i], name);
           #if FOLDER_SORTING != 0
-            isDir[i] = filenameIsDir;
+            isdir[i] = filenameIsDir;
           #endif
         #endif
       }
 
       // Bubble Sort
-      for (uint16_t i=fileCnt; --i;) {
+      for (uint8_t i=fileCnt; --i;) {
         bool cmp, didSwap = false;
-        for (uint16_t j=0; j<i; ++j) {
-          uint16_t s1 = j, s2 = j+1, o1 = sort_order[s1], o2 = sort_order[s2];
+        for (uint8_t j=0; j<i; ++j) {
+          int s1 = j, s2 = j+1, o1 = sort_order[s1], o2 = sort_order[s2];
           #if SORT_USES_RAM
             #if FOLDER_SORTING != 0
-              cmp = (isDir[o1] == isDir[o2]) ? (strcasecmp(sortnames[o1], sortnames[o2]) > 0) : isDir[FOLDER_SORTING > 0 ? o1 : o2];
+              cmp = (isdir[o1] == isdir[o2]) ? (strcasecmp(sortnames[o1], sortnames[o2]) > 0) : isdir[FOLDER_SORTING > 0 ? o1 : o2];
             #else
-              cmp = strcasecmp(sortnames[o1], sortnames[o2]) > 0;
+              cmp = strcasecmp(sortnames[o1], sortnames[o2]) > 0);
             #endif
           #else
             getfilename(o1);
-            strcpy(name1, longFilename[0] ? longFilename : filename);
             #if FOLDER_SORTING != 0
               bool dir1 = filenameIsDir;
             #endif
+            char *name = diveFilename[0] ? diveFilename : filename;
+            strcpy(sortname, name);
             getfilename(o2);
-            char *name2 = longFilename[0] ? longFilename : filename;
+            name = diveFilename[0] ? diveFilename : filename;
             #if FOLDER_SORTING != 0
-              cmp = (dir1 == filenameIsDir) ? (strcasecmp(name1, name2) > 0) : (FOLDER_SORTING > 0 ? dir1 : !dir1);
+              cmp = (dir1 == filenameIsDir) ? (strcasecmp(sortname, name) > 0) : (FOLDER_SORTING > 0 ? dir1 : !dir1);
             #else
-              cmp = strcasecmp(name1, name2) > 0;
+              cmp = strcasecmp(sortname, name) > 0);
             #endif
           #endif
           if (cmp) {
-            // char out[LONG_FILENAME_LENGTH*2+20];
-            // sprintf_P(out, PSTR("Swap %i %s for %i %s"), o1, sortnames[o1], o2, sortnames[o2]);
-            // SERIAL_ECHOLN(out);
+            // SERIAL_ECHOPGM("Swap ");
+            // SERIAL_ECHOLN(sortnames[o1]);
+            // SERIAL_ECHOPGM(" for ");
+            // SERIAL_ECHOLN(sortnames[o2]);
             sort_order[s1] = o2;
             sort_order[s2] = o1;
             didSwap = true;
@@ -730,32 +735,30 @@ void CardReader::presort()
       }
 
       #if SORT_USES_RAM && !SORT_USES_MORE_RAM
-        for (uint16_t i=0; i<fileCnt; ++i) free(sortnames[i]);
+        for (int i=0; i < fileCnt; ++i) free(sortnames[i]);
       #endif
     }
     else {
       sort_order[0] = 0;
-      #if SORT_USES_RAM && SORT_USES_MORE_RAM
-        sortnames = (char**)malloc(sizeof(char*));
-        isDir = (uint8_t*)malloc(sizeof(uint8_t));
-        getfilename(0);
-        sortnames[0] = strdup(longFilename[0] ? longFilename : filename);
-        isDir[0] = filenameIsDir;
-      #endif
     }
 
   }
 }
 
 void CardReader::flush_presort() {
-  if (sort_count > 0) {
-    #if SORT_USES_RAM && SORT_USES_MORE_RAM
-      for (uint8_t i=0; i<sort_count; ++i) free(sortnames[i]);
+  #if SORT_USES_MORE_RAM
+    if (sort_count > 0) {
+      for (int i=0; i < sort_count; ++i) {
+        free(sortnames[i]);
+        sort_order[i] = i;
+      }
       free(sortnames);
-    #endif
-    delete sort_order;
-    sort_count = 0;
-  }
+      sortnames = NULL;
+      sort_count = 0;
+    }
+  #else
+    for (int i=SORT_LIMIT; --i;) sort_order[i] = i;
+  #endif
 }
 
 #endif // SDCARD_SORT_ALPHA
