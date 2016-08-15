@@ -159,6 +159,7 @@ FORCE_INLINE bool isCoolingBed() {
 
 int getHeaterPower(int heater);
 void disable_heater();
+void disable_bed();
 void setWatch();
 void updatePID();
 
@@ -167,8 +168,17 @@ void thermal_runaway_protection(int *state, unsigned long *timer, float temperat
 static int thermal_runaway_state_machine[3]; // = {0,0,0};
 static unsigned long thermal_runaway_timer[3]; // = {0,0,0};
 static bool thermal_runaway = false;
+//  #if TEMP_SENSOR_BED != 0
+//   static int thermal_runaway_bed_state_machine;
+//    static unsigned long thermal_runaway_bed_timer;
+//  #endif
+#endif
+
+#ifdef THERMAL_RUNAWAY_PROTECTION_BED_PERIOD && THERMAL_RUNAWAY_PROTECTION_BED_PERIOD > 0
+void thermal_runaway_protection_bed(int *state, unsigned long *timer, float temperature, float target_temperature, int heater_id, int period_seconds, int hysteresis_degc);
+static bool thermal_runaway_bed = false;
   #if TEMP_SENSOR_BED != 0
-    static int thermal_runaway_bed_state_machine;
+   static int thermal_runaway_bed_state_machine;
     static unsigned long thermal_runaway_bed_timer;
   #endif
 #endif

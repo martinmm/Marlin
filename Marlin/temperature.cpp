@@ -539,8 +539,8 @@ void manage_heater()
 
   #if TEMP_SENSOR_BED != 0
   
-    #ifdef THERMAL_RUNAWAY_PROTECTION_PERIOD && THERMAL_RUNAWAY_PROTECTION_PERIOD > 0
-      thermal_runaway_protection(&thermal_runaway_bed_state_machine, &thermal_runaway_bed_timer, current_temperature_bed, target_temperature_bed, 9, THERMAL_RUNAWAY_PROTECTION_BED_PERIOD, THERMAL_RUNAWAY_PROTECTION_BED_HYSTERESIS);
+    #ifdef THERMAL_RUNAWAY_PROTECTION_BED_PERIOD && THERMAL_RUNAWAY_PROTECTION_BED_PERIOD > 0
+      thermal_runaway_protection_bed(&thermal_runaway_bed_state_machine, &thermal_runaway_bed_timer, current_temperature_bed, target_temperature_bed, 9, THERMAL_RUNAWAY_PROTECTION_BED_PERIOD, THERMAL_RUNAWAY_PROTECTION_BED_HYSTERESIS);
     #endif
 
   #ifdef PIDTEMPBED
@@ -1024,7 +1024,7 @@ void thermal_runaway_protection(int *state, unsigned long *timer, float temperat
         SERIAL_ERROR_START;
         SERIAL_ERRORLNPGM("Thermal Runaway, system stopped! Heater_ID: ");
         SERIAL_ERRORLN((int)heater_id);
-        LCD_ALERTMESSAGEPGM("THERMAL RUNAWAY");
+        LCD_ALERTMESSAGEPGM("THERMAL RUNAWAY HOTEND");
         thermal_runaway = true;
         while(1)
         {
@@ -1044,11 +1044,72 @@ void thermal_runaway_protection(int *state, unsigned long *timer, float temperat
 }
 #endif
 
+#ifdef THERMAL_RUNAWAY_PROTECTION_BED_PERIOD && THERMAL_RUNAWAY_PROTECTION_BED_PERIOD > 0
+void thermal_runaway_protection_bed(int *state, unsigned long *timer, float temperature, float target_temperature, int heater_id, int period_seconds, int hysteresis_degc)
+{
+/*
+      SERIAL_ECHO_START;
+      SERIAL_ECHO("Thermal Thermal Runaway Running. Heater ID:");
+      SERIAL_ECHO(heater_id);
+      SERIAL_ECHO(" ;  State:");
+      SERIAL_ECHO(*state);
+      SERIAL_ECHO(" ;  Timer:");
+      SERIAL_ECHO(*timer);
+      SERIAL_ECHO(" ;  Temperature:");
+      SERIAL_ECHO(temperature);
+      SERIAL_ECHO(" ;  Target Temp:");
+      SERIAL_ECHO(target_temperature);
+      SERIAL_ECHOLN("");    
+*/
+  if ((target_temperature == 0) || thermal_runaway_bed)
+  {
+    *state = 0;
+    *timer = 0;
+    return;
+  }
+  switch (*state)
+  {
+    case 0: // "Heater Inactive" state
+      if (target_temperature > 0) *state = 1;
+      break;
+    case 1: // "First Heating" state
+      if (temperature >= target_temperature) *state = 2;
+      break;
+    case 2: // "Temperature Stable" state
+      if (temperature >= (target_temperature - hysteresis_degc))
+      {
+        *timer = millis();
+      } 
+      else if ( (millis() - *timer) > period_seconds*1000)
+      {
+        SERIAL_ERROR_START;
+        SERIAL_ERRORLNPGM("Thermal Runaway, heat bed stopped! Heater_ID: ");
+        SERIAL_ERRORLN((int)heater_id);
+        LCD_ALERTMESSAGEPGM("THERMAL RUNAWAY BED");
+        thermal_runaway = true;
+        while(1)
+        {
+          disable_bed();
+          disable_x();
+          disable_y();
+          disable_z();
+          disable_e0();
+          disable_e1();
+          disable_e2();
+          manage_heater();
+          lcd_update();
+        }
+      }
+      break;
+  }
+}
+#endif
+
 void disable_heater()
 {
   for(int i=0;i<EXTRUDERS;i++)
     setTargetHotend(0,i);
-  setTargetBed(0);
+  
   #if defined(TEMP_0_PIN) && TEMP_0_PIN > -1
   target_temperature[0]=0;
   soft_pwm[0]=0;
@@ -1073,6 +1134,15 @@ void disable_heater()
     #endif
   #endif 
 
+  #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
+	disable_bed();
+  #endif 
+}
+
+void disable_bed()
+{
+  setTargetBed(0);
+ 
   #if defined(TEMP_BED_PIN) && TEMP_BED_PIN > -1
     target_temperature_bed=0;
     soft_pwm_bed=0;

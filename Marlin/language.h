@@ -39,6 +39,9 @@
 #elif MOTHERBOARD == 88
 	#define MACHINE_NAME "Makibox"
 	#define FIRMWARE_URL "https://github.com/ErikZalm/Marlin/"
+#elif MOTHERBOARD == 33
+	#define MACHINE_NAME "Fab Mini"
+	#define FIRMWARE_URL "http://www.elproducts.com/"
 #else
 	#ifdef CUSTOM_MENDEL_NAME
 		#define MACHINE_NAME CUSTOM_MENDEL_NAME
@@ -96,9 +99,9 @@
 #define MSG_ERR_NO_THERMISTORS "No thermistors - no temperature"
 #define MSG_M109_INVALID_EXTRUDER "M109 Invalid extruder "
 #define MSG_HEATING "Heating..."
-#define MSG_HEATING_COMPLETE "Heating done."
+#define MSG_HEATING_COMPLETE "Hot, Go Go GO!."
 #define MSG_BED_HEATING "Bed Heating."
-#define MSG_BED_DONE "Bed done."
+#define MSG_BED_DONE "Beds Hot!"
 #define MSG_M115_REPORT "FIRMWARE_NAME:Marlin V1; Sprinter/grbl mashup for gen6 FIRMWARE_URL:" FIRMWARE_URL " PROTOCOL_VERSION:" PROTOCOL_VERSION " MACHINE_TYPE:" MACHINE_NAME " EXTRUDER_COUNT:" STRINGIFY(EXTRUDERS) " UUID:" MACHINE_UUID "\n"
 #define MSG_COUNT_X " Count X: "
 #define MSG_ERR_KILLED "Printer halted. kill() called!"
