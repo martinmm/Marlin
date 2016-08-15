@@ -883,6 +883,15 @@ void setup() {
   if (mcu & 32) SERIAL_ECHOLNPGM(MSG_SOFTWARE_RESET);
   MCUSR = 0;
 
+/*---------------MKS OLED patch_3-----------------------*/
+#if defined (MKS_OLED13_128x64_FULL_GRAPHICS_CONTROLLER)
+  pinMode(LCD_PINS_DC, OUTPUT);      
+  pinMode(LCD_PINS_RST, OUTPUT);    
+  digitalWrite(LCD_PINS_RST  , LOW);
+  delay(1000);
+  digitalWrite(LCD_PINS_RST  , HIGH);
+#endif  
+/*---------------MKS OLED patch_3-----------------------*/ 
   SERIAL_ECHOPGM(MSG_MARLIN);
   SERIAL_ECHOLNPGM(" " SHORT_BUILD_VERSION);
 

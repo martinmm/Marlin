@@ -149,6 +149,10 @@
 #elif ENABLED(U8GLIB_ST7920)
   //U8GLIB_ST7920_128X64_RRD u8g(0,0,0);
   U8GLIB_ST7920_128X64_RRD u8g(0);
+/*---------------MKS OLED patch_2-----------------------*/
+#elif defined(U8GLIB_SH1106) 
+U8GLIB_SH1106_128X64 u8g(23, 17, 16, 25);	// SW SPI Com: SCK = 23, MOSI = 17, CS = 16, A0 = 25
+/*---------------MKS OLED patch_2-----------------------*/
 #elif ENABLED(CARTESIO_UI)
   // The CartesioUI display
   #if DOGLCD_MOSI != -1 && DOGLCD_SCK != -1

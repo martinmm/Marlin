@@ -139,6 +139,23 @@
   #define SLED_PIN           -1
 #endif
 
+
+/*---------------MKS OLED patch_4-----------------------*/
+#if defined (MKS_OLED13_128x64_FULL_GRAPHICS_CONTROLLER)
+#ifdef LCD_PINS_D5
+#undef LCD_PINS_D5
+#define LCD_PINS_D5 -1
+#endif
+#ifdef LCD_PINS_D6
+#undef LCD_PINS_D6
+#define LCD_PINS_D6 -1
+#endif
+#define LCD_PINS_RST  27
+#define LCD_PINS_DC   25
+#endif
+
+/*---------------MKS OLED patch_4-----------------------*/
+
 #if ENABLED(ULTRA_LCD)
 
   #if ENABLED(REPRAPWORLD_GRAPHICAL_LCD)

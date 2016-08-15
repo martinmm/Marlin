@@ -1161,6 +1161,20 @@
 // is pressed, a value of 10.0 means 10mm per click.
 //
 //#define REPRAPWORLD_KEYPAD
+/*---------------MKS OLED patch_1-----------------------*/
+// MKS  OLED 1.3''  128x64 FULL GRAPHICS CONTROLLER
+// ==> REMEMBER TO INSTALL U8glib to your ARDUINO library folder
+
+#define MKS_OLED13_128x64_FULL_GRAPHICS_CONTROLLER
+
+#if defined (MKS_OLED13_128x64_FULL_GRAPHICS_CONTROLLER)
+	#define DOGLCD
+	#define U8GLIB_SH1106
+	#define REPRAP_DISCOUNT_SMART_CONTROLLER
+	#define NEWPANEL
+#endif
+
+/*---------------MKS OLED patch_1-----------------------*/
 //#define REPRAPWORLD_KEYPAD_MOVE_STEP 1.0
 
 //
