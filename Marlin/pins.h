@@ -561,8 +561,10 @@
     #define Y_STEP_PIN         60
     #define Y_DIR_PIN          61
     #define Y_ENABLE_PIN       56
-    #define Y_MIN_PIN          14
-    #define Y_MAX_PIN          -1   //15
+    #define Y_MIN_PIN          -1    //update
+    #define Y_MAX_PIN          15    //update
+   // #define Y_MIN_PIN          14
+   // #define Y_MAX_PIN          -1   //15
 
     #define Z_STEP_PIN         46
     #define Z_DIR_PIN          48
@@ -657,7 +659,8 @@
   #endif
 
   #if MOTHERBOARD == 33 || MOTHERBOARD == 35 || MOTHERBOARD == 67 || MOTHERBOARD == 68
-    #define FAN_PIN            9 // (Sprinter config)
+   // #define FAN_PIN            9 // (Sprinter config)
+   #define FAN_PIN            -1 // (Sprinter config)
   #else
     #define FAN_PIN            4 // IO pin. Buffer needed
   #endif
